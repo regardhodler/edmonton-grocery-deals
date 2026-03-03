@@ -603,6 +603,27 @@ doc.addEventListener('click', function(e) {
 
     updateBadge();
 })();
+// Back to top — delegated click on .back-to-top rendered via st.markdown
+doc.addEventListener('click', function(e) {
+    if (!e.target.closest('.back-to-top')) return;
+    e.preventDefault();
+    var selectors = [
+        '[data-testid="stAppViewContainer"] > section',
+        '[data-testid="stAppViewContainer"] > .main',
+        '[data-testid="stAppViewContainer"]',
+        'section.main',
+        '.stApp'
+    ];
+    selectors.forEach(function(s) {
+        var el = doc.querySelector(s);
+        if (el) { el.scrollTop = 0; }
+    });
+    doc.documentElement.scrollTop = 0;
+    doc.body.scrollTop = 0;
+    window.parent.scrollTo(0, 0);
+    var h = doc.querySelector('h1');
+    if (h) h.scrollIntoView({behavior: 'smooth'});
+});
 </script>
 """, height=0)
 
@@ -984,9 +1005,9 @@ with tab_map:
 
     st_folium(m, width=None, height=450, use_container_width=True)
 
-# ── Back to top button (rendered natively in Streamlit DOM) ──────────────────
+# ── Back to top button (rendered in Streamlit DOM, click handled by components.html JS) ─
 st.markdown("""
-<a href="#" id="back-to-top-anchor" style="
+<div class="back-to-top" style="
     position: fixed;
     bottom: 5rem;
     right: 2rem;
@@ -1004,23 +1025,5 @@ st.markdown("""
     backdrop-filter: blur(8px);
     border: none;
     text-decoration: none;
-" onclick="
-    var selectors = [
-        '[data-testid=stAppViewContainer] > section',
-        '[data-testid=stAppViewContainer] > .main',
-        '[data-testid=stAppViewContainer]',
-        'section.main',
-        '.stApp'
-    ];
-    selectors.forEach(function(s) {
-        var el = document.querySelector(s);
-        if (el) { el.scrollTop = 0; }
-    });
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    window.scrollTo(0, 0);
-    var h = document.querySelector('h1');
-    if (h) h.scrollIntoView({behavior: 'smooth'});
-    return false;
-" title="Back to top">\u2191</a>
+" title="Back to top">\u2191</div>
 """, unsafe_allow_html=True)
