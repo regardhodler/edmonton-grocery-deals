@@ -153,6 +153,44 @@ st.markdown("""
     color: #aaa;
     margin-top: 0.2rem;
 }
+
+/* Store filter chips */
+.store-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.4rem 0;
+}
+.store-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1.5px solid rgba(128,128,128,0.3);
+    background: transparent;
+    color: #ccc;
+    transition: all 0.15s;
+}
+.store-chip.active {
+    border-color: var(--chip-color);
+    background: color-mix(in srgb, var(--chip-color) 15%, transparent);
+    color: #fff;
+}
+.store-chip .chip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.store-chip .chip-count {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    margin-left: 0.1rem;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -234,6 +272,40 @@ with sort_col:
     sort_options = ["Name (A-Z)", "Price: Low-High", "Price: High-Low", "Store", "Best Deals"]
     sort_option = st.pills("Sort by", sort_options, default="Name (A-Z)")
 
+# ── Store chip selector (shown when "Store" sort is active) ───────────────────
+if sort_option == "Store":
+    all_merchants = sorted(df["merchant"].unique())
+    # Init session state for selected store chips
+    if "store_chips" not in st.session_state:
+        st.session_state.store_chips = set(all_merchants)
+
+    # Count deals per merchant
+    merchant_counts = df["merchant"].value_counts().to_dict()
+
+    # Render chips as Streamlit pills for each store
+    store_chip_picks = st.pills(
+        "Filter stores",
+        options=all_merchants,
+        default=list(st.session_state.store_chips),
+        selection_mode="multi",
+        label_visibility="collapsed",
+    )
+    st.session_state.store_chips = set(store_chip_picks) if store_chip_picks else set()
+
+    # Show deal counts per selected store
+    if st.session_state.store_chips:
+        counts_parts = []
+        for m in sorted(st.session_state.store_chips):
+            color = MERCHANT_COLORS.get(m, "#888")
+            count = merchant_counts.get(m, 0)
+            dot = f'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{color};margin-right:3px"></span>'
+            counts_parts.append(f'{dot}{m} ({count})')
+        st.markdown(
+            '<div style="font-size:0.8rem;color:#aaa;display:flex;flex-wrap:wrap;gap:0.6rem;">'
+            + "".join(counts_parts) + '</div>',
+            unsafe_allow_html=True,
+        )
+
 # ── Filters + Settings popovers ──────────────────────────────────────────────
 available_merchants = sorted(df["merchant"].unique())
 available_categories = sorted(df["category"].unique())
@@ -299,8 +371,13 @@ with settings_col:
                 st.error("Failed to send. Check token and chat ID.")
 
 # ── Apply filters ─────────────────────────────────────────────────────────────
+# When "Store" sort is active, intersect with store chip selection
+active_stores = selected_stores
+if sort_option == "Store" and hasattr(st.session_state, "store_chips"):
+    active_stores = [s for s in selected_stores if s in st.session_state.store_chips]
+
 filtered = df[
-    df["merchant"].isin(selected_stores) & df["category"].isin(selected_categories)
+    df["merchant"].isin(active_stores) & df["category"].isin(selected_categories)
 ]
 
 if search_query:
