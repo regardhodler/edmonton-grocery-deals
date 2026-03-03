@@ -39,6 +39,16 @@ st.markdown("""
     border-radius: 8px;
 }
 </style>
+<script>
+// Collapse open expanders when clicking outside them
+document.addEventListener('click', function(e) {
+    document.querySelectorAll('details[open]').forEach(function(d) {
+        if (!d.contains(e.target)) {
+            d.removeAttribute('open');
+        }
+    });
+});
+</script>
 """, unsafe_allow_html=True)
 
 st.title("\U0001f6d2 Edmonton Grocery Deals")
