@@ -449,12 +449,17 @@ doc.addEventListener('click', function(e) {
     function saveBag(bag) { localStorage.setItem(STORAGE_KEY, JSON.stringify(bag)); }
     function itemKey(item) { return item.name + '||' + item.merchant; }
 
+    // Remove duplicates from Streamlit reruns
+    doc.querySelectorAll('.bag-fab').forEach(function(el) { el.remove(); });
+    doc.querySelectorAll('.bag-panel').forEach(function(el) { el.remove(); });
+
     // Create FAB
+    var container = doc.querySelector('.stApp') || doc.body;
     const fab = doc.createElement('button');
     fab.className = 'bag-fab';
     fab.title = 'Grocery Bag';
     fab.innerHTML = '&#x1F6D2;<span class="bag-badge">0</span>';
-    doc.body.appendChild(fab);
+    container.appendChild(fab);
 
     // Create Panel
     const panel = doc.createElement('div');
@@ -463,7 +468,7 @@ doc.addEventListener('click', function(e) {
         '<div class="bag-panel-header"><span>&#x1F6D2; Grocery Bag</span><span class="bag-panel-count"></span></div>' +
         '<div class="bag-panel-list"></div>' +
         '<div class="bag-panel-footer"><button class="bag-clear-btn">Clear all</button></div>';
-    doc.body.appendChild(panel);
+    container.appendChild(panel);
 
     const badge = fab.querySelector('.bag-badge');
     const listEl = panel.querySelector('.bag-panel-list');
@@ -622,11 +627,23 @@ doc.addEventListener('click', function(e) {
 })();
 // Back to top button
 (function() {
+    // Remove any existing back-to-top buttons (Streamlit reruns)
+    doc.querySelectorAll('.back-to-top').forEach(function(el) { el.remove(); });
+
     const btn = doc.createElement('button');
     btn.className = 'back-to-top';
     btn.innerHTML = '\u2191';
     btn.title = 'Back to top';
-    doc.body.appendChild(btn);
+    // Inline styles to guarantee visibility
+    btn.style.cssText = 'position:fixed;bottom:2rem;right:2rem;width:44px;height:44px;' +
+        'border-radius:50%;background:rgba(128,128,128,0.25);color:#fff;font-size:1.3rem;' +
+        'display:flex;align-items:center;justify-content:center;cursor:pointer;' +
+        'z-index:99999;backdrop-filter:blur(8px);border:none;';
+
+    // Append to stApp container or body
+    var container = doc.querySelector('.stApp') || doc.body;
+    container.appendChild(btn);
+
     btn.addEventListener('click', function() {
         // Try every known Streamlit scroll container
         var targets = [
@@ -642,9 +659,8 @@ doc.addEventListener('click', function(e) {
                 targets[i].scrollTo({top: 0, behavior: 'smooth'});
             }
         }
-        // Also scroll the parent window itself
         window.parent.scrollTo({top: 0, behavior: 'smooth'});
-        // Fallback: scroll the first element in the page into view
+        // Fallback: scroll the first element into view
         var header = doc.querySelector('[data-testid="stHeader"]') || doc.querySelector('header');
         if (header) header.scrollIntoView({behavior: 'smooth'});
     });
