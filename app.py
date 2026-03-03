@@ -243,9 +243,12 @@ st.markdown("""
     background: rgba(76,175,80,0.1);
 }
 .bag-add-btn.added {
-    border-color: #4CAF50;
-    color: #4CAF50;
-    background: rgba(76,175,80,0.15);
+    border-color: #E53935;
+    color: #E53935;
+    background: rgba(229,57,53,0.12);
+}
+.bag-add-btn.added:hover {
+    background: rgba(229,57,53,0.2);
 }
 
 /* Floating bag FAB */
@@ -497,8 +500,7 @@ doc.addEventListener('click', function(e) {
         renderPanel();
         // Reset all add buttons
         doc.querySelectorAll('.bag-add-btn.added').forEach(function(b) {
-            b.classList.remove('added');
-            b.textContent = '+';
+            setBtnNotInBag(b);
         });
     });
 
@@ -520,14 +522,27 @@ doc.addEventListener('click', function(e) {
                     const d = JSON.parse(card.getAttribute('data-item'));
                     if (itemKey(d) === itemKey(removed)) {
                         const btn = card.querySelector('.bag-add-btn');
-                        if (btn) { btn.classList.remove('added'); btn.textContent = '+'; }
+                        if (btn) { setBtnNotInBag(btn); }
                     }
                 } catch {}
             });
         }
     });
 
-    // Add to bag — delegated click on deal cards
+    // Helper: set button to "in bag" state (minus sign)
+    function setBtnInBag(btn) {
+        btn.classList.add('added');
+        btn.textContent = '\u2212';
+        btn.title = 'Remove from bag';
+    }
+    // Helper: set button to "not in bag" state (plus sign)
+    function setBtnNotInBag(btn) {
+        btn.classList.remove('added');
+        btn.textContent = '+';
+        btn.title = 'Add to bag';
+    }
+
+    // Add/remove toggle — delegated click on deal cards
     doc.addEventListener('click', function(e) {
         const btn = e.target.closest('.bag-add-btn');
         if (!btn) return;
@@ -536,34 +551,39 @@ doc.addEventListener('click', function(e) {
         e.stopPropagation();
         try {
             const item = JSON.parse(card.getAttribute('data-item'));
-            const bag = getBag();
+            var bag = getBag();
             const key = itemKey(item);
-            // Skip if already in bag
-            if (bag.some(function(b) { return itemKey(b) === key; })) return;
-            bag.push(item);
-            saveBag(bag);
-            updateBadge();
-            // Visual feedback
-            btn.classList.add('added');
-            btn.textContent = '\u2713';
-            setTimeout(function() {
-                btn.classList.remove('added');
-                btn.textContent = '+';
-            }, 1200);
+            const idx = bag.findIndex(function(b) { return itemKey(b) === key; });
+            if (idx !== -1) {
+                // Already in bag — remove it
+                bag.splice(idx, 1);
+                saveBag(bag);
+                updateBadge();
+                setBtnNotInBag(btn);
+                if (panel.classList.contains('open')) renderPanel();
+            } else {
+                // Not in bag — add it
+                bag.push(item);
+                saveBag(bag);
+                updateBadge();
+                setBtnInBag(btn);
+            }
         } catch {}
     });
 
     // Sync add-button state on load (mark items already in bag)
     function syncButtons() {
         const bag = getBag();
-        if (!bag.length) return;
         const keys = new Set(bag.map(itemKey));
         doc.querySelectorAll('.deal-card[data-item]').forEach(function(card) {
             try {
                 const d = JSON.parse(card.getAttribute('data-item'));
+                const btn = card.querySelector('.bag-add-btn');
+                if (!btn) return;
                 if (keys.has(itemKey(d))) {
-                    const btn = card.querySelector('.bag-add-btn');
-                    if (btn) { btn.classList.add('added'); btn.textContent = '\u2713'; }
+                    setBtnInBag(btn);
+                } else {
+                    setBtnNotInBag(btn);
                 }
             } catch {}
         });
