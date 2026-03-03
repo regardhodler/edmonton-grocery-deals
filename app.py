@@ -193,28 +193,6 @@ st.markdown("""
     margin-left: 0.1rem;
 }
 
-/* Back to top button */
-.back-to-top {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(128,128,128,0.25);
-    color: #fff;
-    font-size: 1.3rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 1000;
-    backdrop-filter: blur(8px);
-    border: none;
-    transition: background 0.2s;
-}
-.back-to-top:hover { background: rgba(128,128,128,0.45); }
-
 /* Bag controls on deal cards */
 .deal-card { position: relative; }
 .bag-controls {
@@ -625,52 +603,6 @@ doc.addEventListener('click', function(e) {
 
     updateBadge();
 })();
-// Back to top button
-(function() {
-    // Remove any existing back-to-top buttons (Streamlit reruns)
-    doc.querySelectorAll('.back-to-top').forEach(function(el) { el.remove(); });
-
-    const btn = doc.createElement('button');
-    btn.className = 'back-to-top';
-    btn.innerHTML = '\u2191';
-    btn.title = 'Back to top';
-    // Inline styles — bottom:5rem to sit above Streamlit Cloud "Manage app"
-    btn.style.cssText = 'position:fixed;bottom:5rem;right:2rem;width:44px;height:44px;' +
-        'border-radius:50%;background:rgba(128,128,128,0.25);color:#fff;font-size:1.3rem;' +
-        'display:flex;align-items:center;justify-content:center;cursor:pointer;' +
-        'z-index:99999;backdrop-filter:blur(8px);border:none;';
-
-    // Append to stApp container or body
-    var container = doc.querySelector('.stApp') || doc.body;
-    container.appendChild(btn);
-
-    btn.addEventListener('click', function() {
-        // Scroll every possible container to top (don't check scrollTop — just do it)
-        var selectors = [
-            '[data-testid="stAppViewContainer"] > section',
-            '[data-testid="stAppViewContainer"] > .main',
-            '[data-testid="stAppViewContainer"]',
-            '[data-testid="stMainBlockContainer"]',
-            '.stApp',
-            'section.main'
-        ];
-        selectors.forEach(function(sel) {
-            var el = doc.querySelector(sel);
-            if (el) {
-                el.scrollTop = 0;
-                el.scrollTo({top: 0, behavior: 'smooth'});
-            }
-        });
-        doc.documentElement.scrollTop = 0;
-        doc.body.scrollTop = 0;
-        window.parent.scrollTo({top: 0, behavior: 'smooth'});
-        // Nuclear fallback: find the title and scroll it into view
-        var title = doc.querySelector('[data-testid="stHeader"]')
-            || doc.querySelector('header')
-            || doc.querySelector('h1');
-        if (title) title.scrollIntoView({behavior: 'smooth'});
-    });
-})();
 </script>
 """, height=0)
 
@@ -1051,3 +983,44 @@ with tab_map:
         ).add_to(m)
 
     st_folium(m, width=None, height=450, use_container_width=True)
+
+# ── Back to top button (rendered natively in Streamlit DOM) ──────────────────
+st.markdown("""
+<a href="#" id="back-to-top-anchor" style="
+    position: fixed;
+    bottom: 5rem;
+    right: 2rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(128,128,128,0.25);
+    color: #fff;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 99999;
+    backdrop-filter: blur(8px);
+    border: none;
+    text-decoration: none;
+" onclick="
+    var selectors = [
+        '[data-testid=stAppViewContainer] > section',
+        '[data-testid=stAppViewContainer] > .main',
+        '[data-testid=stAppViewContainer]',
+        'section.main',
+        '.stApp'
+    ];
+    selectors.forEach(function(s) {
+        var el = document.querySelector(s);
+        if (el) { el.scrollTop = 0; }
+    });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo(0, 0);
+    var h = document.querySelector('h1');
+    if (h) h.scrollIntoView({behavior: 'smooth'});
+    return false;
+" title="Back to top">\u2191</a>
+""", unsafe_allow_html=True)
