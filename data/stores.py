@@ -288,3 +288,13 @@ for _s in STORES:
     STORES_BY_MERCHANT.setdefault(_s["merchant"], []).append(_s)
 
 MERCHANT_NAMES = sorted(STORES_BY_MERCHANT.keys())
+
+MERCHANT_COLORS = {
+    "Real Canadian Superstore": "#E53935",
+    "Walmart": "#1E88E5",
+    "Save-On-Foods": "#43A047",
+    "No Frills": "#FB8C00",
+    "Safeway": "#8E24AA",
+    "Costco": "#B71C1C",
+    "FreshCo": "#5F9EA0",
+}
