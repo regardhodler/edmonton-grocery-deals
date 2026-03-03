@@ -57,22 +57,32 @@ if df.empty:
 # Add categories
 df["category"] = df["name"].apply(categorize_item)
 
-# ── Filters — inline on top for mobile, sidebar on desktop ─────────────────
-with st.sidebar:
-    st.header("Filters")
+# ── Search bar + sort pills ────────────────────────────────────────────────
+search_col, sort_col = st.columns([3, 1])
+with search_col:
+    search_query = st.text_input(
+        "\U0001f50d Search items",
+        placeholder="e.g. chicken, bread, eggs",
+        label_visibility="collapsed",
+    )
+with sort_col:
+    sort_options = ["Name (A-Z)", "Price: Low-High", "Price: High-Low", "Store"]
+    sort_option = st.pills("Sort by", sort_options, default="Name (A-Z)")
 
+# ── Filters popover ───────────────────────────────────────────────────────
+available_merchants = sorted(df["merchant"].unique())
+available_categories = sorted(df["category"].unique())
+
+with st.popover("Filters", use_container_width=True):
     if st.button("\U0001f504 Refresh Deals"):
         fetch_deals.clear()
         st.rerun()
 
-    available_merchants = sorted(df["merchant"].unique())
     selected_stores = st.multiselect(
         "Stores",
         options=available_merchants,
         default=available_merchants,
     )
-
-    available_categories = sorted(df["category"].unique())
     selected_categories = st.multiselect(
         "Categories",
         options=available_categories,
@@ -86,18 +96,6 @@ with st.sidebar:
         valid_to = df["valid_to"].dropna().max()
         if valid_from and valid_to:
             st.caption(f"Flyers valid: {valid_from[:10]} to {valid_to[:10]}")
-
-# Search bar + sort pills in main area (easy to tap on phone)
-search_col, sort_col = st.columns([3, 1])
-with search_col:
-    search_query = st.text_input(
-        "\U0001f50d Search items",
-        placeholder="e.g. chicken, bread, eggs",
-        label_visibility="collapsed",
-    )
-with sort_col:
-    sort_options = ["Name (A-Z)", "Price: Low-High", "Price: High-Low", "Store"]
-    sort_option = st.pills("Sort by", sort_options, default="Name (A-Z)")
 
 # ── Apply filters ───────────────────────────────────────────────────────────
 filtered = df[
