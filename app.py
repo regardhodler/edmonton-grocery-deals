@@ -215,12 +215,18 @@ st.markdown("""
 }
 .back-to-top:hover { background: rgba(128,128,128,0.45); }
 
-/* Bag add button on deal cards */
+/* Bag controls on deal cards */
 .deal-card { position: relative; }
-.bag-add-btn {
+.bag-controls {
     position: absolute;
     top: 0.6rem;
     right: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    z-index: 2;
+}
+.bag-ctrl-btn {
     width: 28px;
     height: 28px;
     border-radius: 50%;
@@ -234,21 +240,29 @@ st.markdown("""
     align-items: center;
     justify-content: center;
     transition: all 0.15s;
-    z-index: 2;
     padding: 0;
 }
-.bag-add-btn:hover {
+.bag-ctrl-btn.bag-plus:hover {
     border-color: #4CAF50;
     color: #4CAF50;
     background: rgba(76,175,80,0.1);
 }
-.bag-add-btn.added {
+.bag-ctrl-btn.bag-minus {
     border-color: #E53935;
     color: #E53935;
-    background: rgba(229,57,53,0.12);
+    display: none;
 }
-.bag-add-btn.added:hover {
-    background: rgba(229,57,53,0.2);
+.bag-ctrl-btn.bag-minus:hover {
+    background: rgba(229,57,53,0.15);
+}
+.bag-qty {
+    min-width: 22px;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #fff;
+    display: none;
+    user-select: none;
 }
 
 /* Scroll-to-top above bag FAB */
@@ -471,7 +485,13 @@ doc.addEventListener('click', function(e) {
     topBtn.innerHTML = '\u2191';
     topBtn.title = 'Back to top';
     doc.body.appendChild(topBtn);
+    // Use same scroll logic as the working back-to-top button
     topBtn.addEventListener('click', function() {
+        const main = doc.querySelector('[data-testid="stAppViewContainer"]');
+        const scrollEl = main ? (main.querySelector('.main') || main) : null;
+        if (scrollEl && scrollEl !== window.parent) {
+            scrollEl.scrollTo({top: 0, behavior: 'smooth'});
+        }
         window.parent.scrollTo({top: 0, behavior: 'smooth'});
     });
 
@@ -489,9 +509,13 @@ doc.addEventListener('click', function(e) {
     const countEl = panel.querySelector('.bag-panel-count');
     const clearBtn = panel.querySelector('.bag-clear-btn');
 
+    function totalQty(bag) {
+        return bag.reduce(function(s, item) { return s + (item.qty || 1); }, 0);
+    }
+
     function updateBadge() {
         const bag = getBag();
-        const n = bag.length;
+        const n = totalQty(bag);
         badge.textContent = n;
         fab.style.display = n > 0 ? 'flex' : 'none';
         topBtn.style.display = n > 0 ? 'flex' : 'none';
@@ -500,7 +524,8 @@ doc.addEventListener('click', function(e) {
 
     function renderPanel() {
         const bag = getBag();
-        countEl.textContent = bag.length + ' item' + (bag.length !== 1 ? 's' : '');
+        const total = totalQty(bag);
+        countEl.textContent = total + ' item' + (total !== 1 ? 's' : '');
         if (bag.length === 0) {
             listEl.innerHTML = '<div class="bag-empty">Your bag is empty</div>';
             clearBtn.style.display = 'none';
@@ -512,10 +537,12 @@ doc.addEventListener('click', function(e) {
                 ? '<img src="' + item.image_url.replace(/"/g, '&quot;') + '" alt="">'
                 : '';
             const name = item.name.replace(/</g, '&lt;');
+            const qty = item.qty || 1;
+            const qtyLabel = qty > 1 ? ' \u00D7' + qty : '';
             const detail = (item.price ? item.price.replace(/</g, '&lt;') + ' \u2022 ' : '') + item.merchant.replace(/</g, '&lt;');
             return '<div class="bag-item" data-idx="' + i + '">' +
                 imgHtml +
-                '<div class="bag-item-info"><div class="bag-item-name">' + name + '</div>' +
+                '<div class="bag-item-info"><div class="bag-item-name">' + name + qtyLabel + '</div>' +
                 '<div class="bag-item-detail">' + detail + '</div></div>' +
                 '<button class="bag-item-remove" title="Remove">\u00D7</button></div>';
         }).join('');
@@ -532,10 +559,7 @@ doc.addEventListener('click', function(e) {
         saveBag([]);
         updateBadge();
         renderPanel();
-        // Reset all add buttons
-        doc.querySelectorAll('.bag-add-btn.added').forEach(function(b) {
-            setBtnNotInBag(b);
-        });
+        syncAllCards();
     });
 
     // Remove item from panel
@@ -545,40 +569,67 @@ doc.addEventListener('click', function(e) {
         const bagItem = removeBtn.closest('.bag-item');
         const idx = parseInt(bagItem.dataset.idx, 10);
         const bag = getBag();
-        const removed = bag.splice(idx, 1)[0];
+        bag.splice(idx, 1);
         saveBag(bag);
         updateBadge();
         renderPanel();
-        // Reset matching card button
-        if (removed) {
-            doc.querySelectorAll('.deal-card[data-item]').forEach(function(card) {
-                try {
-                    const d = JSON.parse(card.getAttribute('data-item'));
-                    if (itemKey(d) === itemKey(removed)) {
-                        const btn = card.querySelector('.bag-add-btn');
-                        if (btn) { setBtnNotInBag(btn); }
-                    }
-                } catch {}
-            });
-        }
+        syncAllCards();
     });
 
-    // Helper: set button to "in bag" state (minus sign)
-    function setBtnInBag(btn) {
-        btn.classList.add('added');
-        btn.textContent = '\u2212';
-        btn.title = 'Remove from bag';
-    }
-    // Helper: set button to "not in bag" state (plus sign)
-    function setBtnNotInBag(btn) {
-        btn.classList.remove('added');
-        btn.textContent = '+';
-        btn.title = 'Add to bag';
+    // Update a single card's controls to reflect current bag qty
+    function syncCard(card) {
+        try {
+            const d = JSON.parse(card.getAttribute('data-item'));
+            const bag = getBag();
+            const key = itemKey(d);
+            const entry = bag.find(function(b) { return itemKey(b) === key; });
+            const qty = entry ? (entry.qty || 1) : 0;
+            const minusBtn = card.querySelector('.bag-minus');
+            const qtyEl = card.querySelector('.bag-qty');
+            if (qty > 0) {
+                minusBtn.style.display = 'flex';
+                qtyEl.style.display = 'block';
+                qtyEl.textContent = qty;
+            } else {
+                minusBtn.style.display = 'none';
+                qtyEl.style.display = 'none';
+                qtyEl.textContent = '';
+            }
+        } catch {}
     }
 
-    // Add/remove toggle — delegated click on deal cards
+    function syncAllCards() {
+        doc.querySelectorAll('.deal-card[data-item]').forEach(syncCard);
+    }
+
+    // Plus button — add / increment
     doc.addEventListener('click', function(e) {
-        const btn = e.target.closest('.bag-add-btn');
+        const btn = e.target.closest('.bag-plus');
+        if (!btn) return;
+        const card = btn.closest('.deal-card[data-item]');
+        if (!card) return;
+        e.stopPropagation();
+        try {
+            const item = JSON.parse(card.getAttribute('data-item'));
+            var bag = getBag();
+            const key = itemKey(item);
+            const entry = bag.find(function(b) { return itemKey(b) === key; });
+            if (entry) {
+                entry.qty = (entry.qty || 1) + 1;
+            } else {
+                item.qty = 1;
+                bag.push(item);
+            }
+            saveBag(bag);
+            updateBadge();
+            syncCard(card);
+            if (panel.classList.contains('open')) renderPanel();
+        } catch {}
+    });
+
+    // Minus button — decrement / remove
+    doc.addEventListener('click', function(e) {
+        const btn = e.target.closest('.bag-minus');
         if (!btn) return;
         const card = btn.closest('.deal-card[data-item]');
         if (!card) return;
@@ -588,43 +639,24 @@ doc.addEventListener('click', function(e) {
             var bag = getBag();
             const key = itemKey(item);
             const idx = bag.findIndex(function(b) { return itemKey(b) === key; });
-            if (idx !== -1) {
-                // Already in bag — remove it
+            if (idx === -1) return;
+            var entry = bag[idx];
+            var qty = entry.qty || 1;
+            if (qty <= 1) {
                 bag.splice(idx, 1);
-                saveBag(bag);
-                updateBadge();
-                setBtnNotInBag(btn);
-                if (panel.classList.contains('open')) renderPanel();
             } else {
-                // Not in bag — add it
-                bag.push(item);
-                saveBag(bag);
-                updateBadge();
-                setBtnInBag(btn);
+                entry.qty = qty - 1;
             }
+            saveBag(bag);
+            updateBadge();
+            syncCard(card);
+            if (panel.classList.contains('open')) renderPanel();
         } catch {}
     });
 
-    // Sync add-button state on load (mark items already in bag)
-    function syncButtons() {
-        const bag = getBag();
-        const keys = new Set(bag.map(itemKey));
-        doc.querySelectorAll('.deal-card[data-item]').forEach(function(card) {
-            try {
-                const d = JSON.parse(card.getAttribute('data-item'));
-                const btn = card.querySelector('.bag-add-btn');
-                if (!btn) return;
-                if (keys.has(itemKey(d))) {
-                    setBtnInBag(btn);
-                } else {
-                    setBtnNotInBag(btn);
-                }
-            } catch {}
-        });
-    }
-    // Run sync after a short delay to let Streamlit render cards
-    setTimeout(syncButtons, 500);
-    setTimeout(syncButtons, 1500);
+    // Sync all card controls on load
+    setTimeout(syncAllCards, 500);
+    setTimeout(syncAllCards, 1500);
 
     updateBadge();
 })();
@@ -974,7 +1006,13 @@ with tab_list:
                 )
 
             cards_html += "</div>"  # deal-info
-            cards_html += '<button class="bag-add-btn" title="Add to bag">+</button>'
+            cards_html += (
+                '<div class="bag-controls">'
+                '<button class="bag-ctrl-btn bag-minus" title="Remove one">\u2212</button>'
+                '<span class="bag-qty"></span>'
+                '<button class="bag-ctrl-btn bag-plus" title="Add to bag">+</button>'
+                '</div>'
+            )
             cards_html += "</div>"  # deal-card
 
         cards_html += "</div>"
