@@ -1,8 +1,9 @@
-"""Hardcoded west-end Edmonton store locations."""
+"""Store locations across Edmonton, St. Albert, and Leduc."""
 
 STORES = [
+    # ── Real Canadian Superstore ─────────────────────────────────────────
     {
-        "name": "Real Canadian Superstore (Mayfield)",
+        "name": "Superstore (Mayfield)",
         "merchant": "Real Canadian Superstore",
         "address": "16940 109 Ave NW, Edmonton",
         "lat": 53.5561,
@@ -10,13 +11,38 @@ STORES = [
         "color": "red",
     },
     {
-        "name": "Real Canadian Superstore (West End)",
+        "name": "Superstore (West End)",
         "merchant": "Real Canadian Superstore",
         "address": "17010 90 Ave NW, Edmonton",
         "lat": 53.5241,
         "lon": -113.5870,
         "color": "red",
     },
+    {
+        "name": "Superstore (South Common)",
+        "merchant": "Real Canadian Superstore",
+        "address": "3010 Calgary Trail NW, Edmonton",
+        "lat": 53.4680,
+        "lon": -113.4940,
+        "color": "red",
+    },
+    {
+        "name": "Superstore (Clareview)",
+        "merchant": "Real Canadian Superstore",
+        "address": "13710 40 St NW, Edmonton",
+        "lat": 53.6060,
+        "lon": -113.4540,
+        "color": "red",
+    },
+    {
+        "name": "Superstore (St. Albert)",
+        "merchant": "Real Canadian Superstore",
+        "address": "700 St Albert Trail, St. Albert",
+        "lat": 53.6260,
+        "lon": -113.6190,
+        "color": "red",
+    },
+    # ── Walmart ──────────────────────────────────────────────────────────
     {
         "name": "Walmart (WEM)",
         "merchant": "Walmart",
@@ -34,6 +60,47 @@ STORES = [
         "color": "blue",
     },
     {
+        "name": "Walmart (South Edmonton)",
+        "merchant": "Walmart",
+        "address": "4821 Calgary Trail NW, Edmonton",
+        "lat": 53.4560,
+        "lon": -113.4980,
+        "color": "blue",
+    },
+    {
+        "name": "Walmart (North Edmonton)",
+        "merchant": "Walmart",
+        "address": "13750 137 Ave NW, Edmonton",
+        "lat": 53.6080,
+        "lon": -113.5560,
+        "color": "blue",
+    },
+    {
+        "name": "Walmart (Manning)",
+        "merchant": "Walmart",
+        "address": "15420 Manning Dr NW, Edmonton",
+        "lat": 53.6280,
+        "lon": -113.4270,
+        "color": "blue",
+    },
+    {
+        "name": "Walmart (St. Albert)",
+        "merchant": "Walmart",
+        "address": "375 St Albert Trail, St. Albert",
+        "lat": 53.6170,
+        "lon": -113.6180,
+        "color": "blue",
+    },
+    {
+        "name": "Walmart (Leduc)",
+        "merchant": "Walmart",
+        "address": "6310 50 St, Leduc",
+        "lat": 53.2660,
+        "lon": -113.5440,
+        "color": "blue",
+    },
+    # ── Save-On-Foods ────────────────────────────────────────────────────
+    {
         "name": "Save-On-Foods (Jasper Gates)",
         "merchant": "Save-On-Foods",
         "address": "14927 Stony Plain Rd NW, Edmonton",
@@ -42,6 +109,31 @@ STORES = [
         "color": "green",
     },
     {
+        "name": "Save-On-Foods (Windermere)",
+        "merchant": "Save-On-Foods",
+        "address": "6603 177 Ave SW, Edmonton",
+        "lat": 53.4360,
+        "lon": -113.5610,
+        "color": "green",
+    },
+    {
+        "name": "Save-On-Foods (Grange)",
+        "merchant": "Save-On-Foods",
+        "address": "7015 Ellerslie Rd SW, Edmonton",
+        "lat": 53.4170,
+        "lon": -113.5290,
+        "color": "green",
+    },
+    {
+        "name": "Save-On-Foods (St. Albert)",
+        "merchant": "Save-On-Foods",
+        "address": "160 Bellerose Dr, St. Albert",
+        "lat": 53.6400,
+        "lon": -113.6040,
+        "color": "green",
+    },
+    # ── No Frills ────────────────────────────────────────────────────────
+    {
         "name": "No Frills (West Edmonton)",
         "merchant": "No Frills",
         "address": "9511 149 St NW, Edmonton",
@@ -49,6 +141,23 @@ STORES = [
         "lon": -113.5618,
         "color": "orange",
     },
+    {
+        "name": "No Frills (Northgate)",
+        "merchant": "No Frills",
+        "address": "9499 137 Ave NW, Edmonton",
+        "lat": 53.6050,
+        "lon": -113.5140,
+        "color": "orange",
+    },
+    {
+        "name": "No Frills (Millwoods)",
+        "merchant": "No Frills",
+        "address": "2616 66 St NW, Edmonton",
+        "lat": 53.4580,
+        "lon": -113.4410,
+        "color": "orange",
+    },
+    # ── Safeway ──────────────────────────────────────────────────────────
     {
         "name": "Safeway (Meadowlark)",
         "merchant": "Safeway",
@@ -66,6 +175,55 @@ STORES = [
         "color": "purple",
     },
     {
+        "name": "Safeway (Oliver)",
+        "merchant": "Safeway",
+        "address": "10750 124 St NW, Edmonton",
+        "lat": 53.5420,
+        "lon": -113.5350,
+        "color": "purple",
+    },
+    {
+        "name": "Safeway (Capilano)",
+        "merchant": "Safeway",
+        "address": "5004 98 Ave NW, Edmonton",
+        "lat": 53.5260,
+        "lon": -113.4480,
+        "color": "purple",
+    },
+    {
+        "name": "Safeway (Terra Losa)",
+        "merchant": "Safeway",
+        "address": "9920 178 St NW, Edmonton",
+        "lat": 53.5165,
+        "lon": -113.6310,
+        "color": "purple",
+    },
+    {
+        "name": "Safeway (Millwoods)",
+        "merchant": "Safeway",
+        "address": "6408 28 Ave NW, Edmonton",
+        "lat": 53.4550,
+        "lon": -113.4600,
+        "color": "purple",
+    },
+    {
+        "name": "Safeway (St. Albert)",
+        "merchant": "Safeway",
+        "address": "10 Inglewood Dr, St. Albert",
+        "lat": 53.6310,
+        "lon": -113.6260,
+        "color": "purple",
+    },
+    {
+        "name": "Safeway (Leduc)",
+        "merchant": "Safeway",
+        "address": "4706 50 Ave, Leduc",
+        "lat": 53.2600,
+        "lon": -113.5490,
+        "color": "purple",
+    },
+    # ── Costco ───────────────────────────────────────────────────────────
+    {
         "name": "Costco (West Edmonton)",
         "merchant": "Costco",
         "address": "10020 180 St NW, Edmonton",
@@ -74,6 +232,31 @@ STORES = [
         "color": "darkred",
     },
     {
+        "name": "Costco (South Edmonton)",
+        "merchant": "Costco",
+        "address": "2616 91 St SW, Edmonton",
+        "lat": 53.4380,
+        "lon": -113.4730,
+        "color": "darkred",
+    },
+    {
+        "name": "Costco (North Edmonton)",
+        "merchant": "Costco",
+        "address": "15003 137 Ave NW, Edmonton",
+        "lat": 53.6100,
+        "lon": -113.5700,
+        "color": "darkred",
+    },
+    {
+        "name": "Costco (St. Albert)",
+        "merchant": "Costco",
+        "address": "295 Paquette St, St. Albert",
+        "lat": 53.6460,
+        "lon": -113.6330,
+        "color": "darkred",
+    },
+    # ── FreshCo ──────────────────────────────────────────────────────────
+    {
         "name": "FreshCo (West Edmonton)",
         "merchant": "FreshCo",
         "address": "10706 107 Ave NW, Edmonton",
@@ -81,9 +264,25 @@ STORES = [
         "lon": -113.5250,
         "color": "cadetblue",
     },
+    {
+        "name": "FreshCo (Southgate)",
+        "merchant": "FreshCo",
+        "address": "5015 111 St NW, Edmonton",
+        "lat": 53.4870,
+        "lon": -113.5150,
+        "color": "cadetblue",
+    },
+    {
+        "name": "FreshCo (Northside)",
+        "merchant": "FreshCo",
+        "address": "12736 82 St NW, Edmonton",
+        "lat": 53.5830,
+        "lon": -113.4640,
+        "color": "cadetblue",
+    },
 ]
 
-# Quick lookup: merchant name → list of store dicts
+# Quick lookup: merchant name -> list of store dicts
 STORES_BY_MERCHANT = {}
 for _s in STORES:
     STORES_BY_MERCHANT.setdefault(_s["merchant"], []).append(_s)

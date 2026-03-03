@@ -1,4 +1,4 @@
-"""Edmonton Grocery Deals Finder — browse west-end flyer deals."""
+"""Edmonton Grocery Deals Finder — Edmonton, St. Albert & Leduc."""
 
 import streamlit as st
 import pandas as pd
@@ -42,7 +42,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("\U0001f6d2 Edmonton Grocery Deals")
-st.caption("West-end flyer deals \u2022 updated hourly")
+st.caption("Edmonton \u2022 St. Albert \u2022 Leduc \u2022 updated hourly")
 
 # ── Fetch data ──────────────────────────────────────────────────────────────
 df = fetch_deals()
@@ -85,7 +85,7 @@ with st.sidebar:
     )
 
     st.divider()
-    st.caption("Postal code: T5P1A1 (west Edmonton)")
+    st.caption("Edmonton, St. Albert & Leduc")
     if not df.empty:
         valid_from = df["valid_from"].dropna().min()
         valid_to = df["valid_to"].dropna().max()
@@ -155,7 +155,7 @@ with tab_list:
 
 # ── Map View ────────────────────────────────────────────────────────────────
 with tab_map:
-    m = folium.Map(location=[53.53, -113.58], zoom_start=12, tiles="OpenStreetMap")
+    m = folium.Map(location=[53.48, -113.53], zoom_start=10, tiles="OpenStreetMap")
 
     for store in STORES:
         merchant = store["merchant"]

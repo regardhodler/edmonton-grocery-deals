@@ -5,7 +5,6 @@ import pandas as pd
 import streamlit as st
 
 SEARCH_URL = "https://backflipp.wishabi.com/flipp/items/search"
-FLYERS_URL = "https://backflipp.wishabi.com/flipp/flyers"
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
@@ -18,6 +17,14 @@ TARGET_MERCHANTS = {
     "Costco",
     "FreshCo",
 }
+
+# Postal codes covering Edmonton, St. Albert, and Leduc
+POSTAL_CODES = [
+    "T5P1A1",  # West Edmonton
+    "T5J0K1",  # Central Edmonton
+    "T8N0A1",  # St. Albert
+    "T9E0A1",  # Leduc
+]
 
 # Multiple queries to get broad coverage across all merchants
 SEARCH_QUERIES = [
@@ -52,55 +59,60 @@ def _search_items(postal_code: str, query: str) -> list[dict]:
 
 
 @st.cache_data(ttl=3600, show_spinner="Loading flyer deals...")
-def fetch_deals(postal_code: str = "T5P1A1") -> pd.DataFrame:
-    """Fetch current deals from target stores using multiple search queries."""
+def fetch_deals() -> pd.DataFrame:
+    """Fetch current deals from target stores across all postal codes."""
     seen_ids = set()
     all_items = []
 
-    for query in SEARCH_QUERIES:
-        try:
-            items = _search_items(postal_code, query)
-        except Exception:
-            continue
-
-        for item in items:
-            item_id = item.get("id")
-            if item_id in seen_ids:
-                continue
-            seen_ids.add(item_id)
-
-            merchant = item.get("merchant_name", "")
-            if merchant not in TARGET_MERCHANTS:
+    for postal_code in POSTAL_CODES:
+        for query in SEARCH_QUERIES:
+            try:
+                items = _search_items(postal_code, query)
+            except Exception:
                 continue
 
-            name = item.get("name", "").strip()
-            if not name:
-                continue
+            for item in items:
+                item_id = item.get("id")
+                if item_id in seen_ids:
+                    continue
+                seen_ids.add(item_id)
 
-            current_price = item.get("current_price")
-            original_price = item.get("original_price")
-            pre_price = item.get("pre_price_text", "") or ""
-            sale_story = item.get("sale_story", "") or ""
-            image_url = item.get("clean_image_url") or item.get("clipping_image_url", "")
+                merchant = item.get("merchant_name", "")
+                if merchant not in TARGET_MERCHANTS:
+                    continue
 
-            # Build price display text
-            if current_price is not None:
-                price_text = f"${current_price:.2f}"
-            else:
-                price_text = sale_story
+                name = item.get("name", "").strip()
+                if not name:
+                    continue
 
-            all_items.append({
-                "merchant": merchant,
-                "name": name,
-                "price": price_text,
-                "pre_price": f"${original_price:.2f}" if original_price else pre_price,
-                "current_price": current_price,
-                "original_price": original_price,
-                "sale_story": sale_story,
-                "valid_from": item.get("valid_from", ""),
-                "valid_to": item.get("valid_to", ""),
-                "image_url": image_url,
-            })
+                current_price = item.get("current_price")
+                original_price = item.get("original_price")
+                pre_price = item.get("pre_price_text", "") or ""
+                sale_story = item.get("sale_story", "") or ""
+                image_url = (
+                    item.get("clean_image_url")
+                    or item.get("clipping_image_url", "")
+                )
+
+                if current_price is not None:
+                    price_text = f"${current_price:.2f}"
+                else:
+                    price_text = sale_story
+
+                all_items.append({
+                    "merchant": merchant,
+                    "name": name,
+                    "price": price_text,
+                    "pre_price": (
+                        f"${original_price:.2f}" if original_price else pre_price
+                    ),
+                    "current_price": current_price,
+                    "original_price": original_price,
+                    "sale_story": sale_story,
+                    "valid_from": item.get("valid_from", ""),
+                    "valid_to": item.get("valid_to", ""),
+                    "image_url": image_url,
+                })
 
     df = pd.DataFrame(all_items)
     if df.empty:
