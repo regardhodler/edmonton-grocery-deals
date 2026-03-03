@@ -436,14 +436,14 @@ doc.addEventListener('click', function(e) {
     const fab = doc.createElement('button');
     fab.className = 'bag-fab';
     fab.title = 'Grocery Bag';
-    fab.innerHTML = '\uD83D\uDED2<span class="bag-badge">0</span>';
+    fab.innerHTML = '&#x1F6D2;<span class="bag-badge">0</span>';
     doc.body.appendChild(fab);
 
     // Create Panel
     const panel = doc.createElement('div');
     panel.className = 'bag-panel';
     panel.innerHTML =
-        '<div class="bag-panel-header"><span>\uD83D\uDED2 Grocery Bag</span><span class="bag-panel-count"></span></div>' +
+        '<div class="bag-panel-header"><span>&#x1F6D2; Grocery Bag</span><span class="bag-panel-count"></span></div>' +
         '<div class="bag-panel-list"></div>' +
         '<div class="bag-panel-footer"><button class="bag-clear-btn">Clear all</button></div>';
     doc.body.appendChild(panel);
