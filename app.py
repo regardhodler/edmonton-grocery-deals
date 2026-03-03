@@ -628,12 +628,25 @@ doc.addEventListener('click', function(e) {
     btn.title = 'Back to top';
     doc.body.appendChild(btn);
     btn.addEventListener('click', function() {
-        const main = doc.querySelector('[data-testid="stAppViewContainer"]');
-        const scrollEl = main ? (main.querySelector('.main') || main) : null;
-        if (scrollEl && scrollEl !== window.parent) {
-            scrollEl.scrollTo({top: 0, behavior: 'smooth'});
+        // Try every known Streamlit scroll container
+        var targets = [
+            doc.querySelector('[data-testid="stAppViewContainer"] > .main'),
+            doc.querySelector('[data-testid="stAppViewContainer"]'),
+            doc.querySelector('[data-testid="stMainBlockContainer"]'),
+            doc.querySelector('.stApp'),
+            doc.documentElement,
+            doc.body
+        ];
+        for (var i = 0; i < targets.length; i++) {
+            if (targets[i] && targets[i].scrollTop > 0) {
+                targets[i].scrollTo({top: 0, behavior: 'smooth'});
+            }
         }
+        // Also scroll the parent window itself
         window.parent.scrollTo({top: 0, behavior: 'smooth'});
+        // Fallback: scroll the first element in the page into view
+        var header = doc.querySelector('[data-testid="stHeader"]') || doc.querySelector('header');
+        if (header) header.scrollIntoView({behavior: 'smooth'});
     });
 })();
 </script>
