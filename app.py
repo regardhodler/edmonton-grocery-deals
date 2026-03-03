@@ -265,28 +265,6 @@ st.markdown("""
     user-select: none;
 }
 
-/* Scroll-to-top above bag FAB */
-.bag-top-btn {
-    position: fixed;
-    bottom: 5.5rem;
-    left: 2rem;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(128,128,128,0.25);
-    color: #fff;
-    font-size: 1.1rem;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 1001;
-    backdrop-filter: blur(8px);
-    border: none;
-    transition: background 0.2s;
-}
-.bag-top-btn:hover { background: rgba(128,128,128,0.45); }
-
 /* Floating bag FAB */
 .bag-fab {
     position: fixed;
@@ -430,7 +408,6 @@ st.markdown("""
         max-height: 50vh;
     }
     .bag-fab { left: 1rem; bottom: 1.5rem; }
-    .bag-top-btn { left: 1rem; bottom: 5rem; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -479,22 +456,6 @@ doc.addEventListener('click', function(e) {
     fab.innerHTML = '&#x1F6D2;<span class="bag-badge">0</span>';
     doc.body.appendChild(fab);
 
-    // Create scroll-to-top button above FAB
-    const topBtn = doc.createElement('button');
-    topBtn.className = 'bag-top-btn';
-    topBtn.innerHTML = '\u2191';
-    topBtn.title = 'Back to top';
-    doc.body.appendChild(topBtn);
-    // Use same scroll logic as the working back-to-top button
-    topBtn.addEventListener('click', function() {
-        const main = doc.querySelector('[data-testid="stAppViewContainer"]');
-        const scrollEl = main ? (main.querySelector('.main') || main) : null;
-        if (scrollEl && scrollEl !== window.parent) {
-            scrollEl.scrollTo({top: 0, behavior: 'smooth'});
-        }
-        window.parent.scrollTo({top: 0, behavior: 'smooth'});
-    });
-
     // Create Panel
     const panel = doc.createElement('div');
     panel.className = 'bag-panel';
@@ -518,7 +479,6 @@ doc.addEventListener('click', function(e) {
         const n = totalQty(bag);
         badge.textContent = n;
         fab.style.display = n > 0 ? 'flex' : 'none';
-        topBtn.style.display = n > 0 ? 'flex' : 'none';
         if (n === 0) panel.classList.remove('open');
     }
 
@@ -666,16 +626,15 @@ doc.addEventListener('click', function(e) {
     btn.className = 'back-to-top';
     btn.innerHTML = '\u2191';
     btn.title = 'Back to top';
-    btn.style.display = 'none';
     doc.body.appendChild(btn);
-    btn.addEventListener('click', () => window.parent.scrollTo({top:0, behavior:'smooth'}));
-    const main = doc.querySelector('[data-testid="stAppViewContainer"]') || window.parent;
-    const scrollTarget = main.querySelector('.main') || main;
-    (scrollTarget === window.parent ? window.parent : scrollTarget)
-        .addEventListener('scroll', () => {
-            const y = scrollTarget.scrollTop || window.parent.scrollY || 0;
-            btn.style.display = y > 400 ? 'flex' : 'none';
-        });
+    btn.addEventListener('click', function() {
+        const main = doc.querySelector('[data-testid="stAppViewContainer"]');
+        const scrollEl = main ? (main.querySelector('.main') || main) : null;
+        if (scrollEl && scrollEl !== window.parent) {
+            scrollEl.scrollTo({top: 0, behavior: 'smooth'});
+        }
+        window.parent.scrollTo({top: 0, behavior: 'smooth'});
+    });
 })();
 </script>
 """, height=0)
