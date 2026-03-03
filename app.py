@@ -634,8 +634,8 @@ doc.addEventListener('click', function(e) {
     btn.className = 'back-to-top';
     btn.innerHTML = '\u2191';
     btn.title = 'Back to top';
-    // Inline styles to guarantee visibility
-    btn.style.cssText = 'position:fixed;bottom:2rem;right:2rem;width:44px;height:44px;' +
+    // Inline styles — bottom:5rem to sit above Streamlit Cloud "Manage app"
+    btn.style.cssText = 'position:fixed;bottom:5rem;right:2rem;width:44px;height:44px;' +
         'border-radius:50%;background:rgba(128,128,128,0.25);color:#fff;font-size:1.3rem;' +
         'display:flex;align-items:center;justify-content:center;cursor:pointer;' +
         'z-index:99999;backdrop-filter:blur(8px);border:none;';
@@ -645,24 +645,30 @@ doc.addEventListener('click', function(e) {
     container.appendChild(btn);
 
     btn.addEventListener('click', function() {
-        // Try every known Streamlit scroll container
-        var targets = [
-            doc.querySelector('[data-testid="stAppViewContainer"] > .main'),
-            doc.querySelector('[data-testid="stAppViewContainer"]'),
-            doc.querySelector('[data-testid="stMainBlockContainer"]'),
-            doc.querySelector('.stApp'),
-            doc.documentElement,
-            doc.body
+        // Scroll every possible container to top (don't check scrollTop — just do it)
+        var selectors = [
+            '[data-testid="stAppViewContainer"] > section',
+            '[data-testid="stAppViewContainer"] > .main',
+            '[data-testid="stAppViewContainer"]',
+            '[data-testid="stMainBlockContainer"]',
+            '.stApp',
+            'section.main'
         ];
-        for (var i = 0; i < targets.length; i++) {
-            if (targets[i] && targets[i].scrollTop > 0) {
-                targets[i].scrollTo({top: 0, behavior: 'smooth'});
+        selectors.forEach(function(sel) {
+            var el = doc.querySelector(sel);
+            if (el) {
+                el.scrollTop = 0;
+                el.scrollTo({top: 0, behavior: 'smooth'});
             }
-        }
+        });
+        doc.documentElement.scrollTop = 0;
+        doc.body.scrollTop = 0;
         window.parent.scrollTo({top: 0, behavior: 'smooth'});
-        // Fallback: scroll the first element into view
-        var header = doc.querySelector('[data-testid="stHeader"]') || doc.querySelector('header');
-        if (header) header.scrollIntoView({behavior: 'smooth'});
+        // Nuclear fallback: find the title and scroll it into view
+        var title = doc.querySelector('[data-testid="stHeader"]')
+            || doc.querySelector('header')
+            || doc.querySelector('h1');
+        if (title) title.scrollIntoView({behavior: 'smooth'});
     });
 })();
 </script>
