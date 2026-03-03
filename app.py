@@ -39,17 +39,22 @@ st.markdown("""
     border-radius: 8px;
 }
 </style>
+""", unsafe_allow_html=True)
+
+# ── Click-outside-to-close expanders (runs JS via iframe) ─────────────────
+import streamlit.components.v1 as components
+components.html("""
 <script>
-// Collapse open expanders when clicking outside them
-document.addEventListener('click', function(e) {
-    document.querySelectorAll('details[open]').forEach(function(d) {
+const doc = window.parent.document;
+doc.addEventListener('click', function(e) {
+    doc.querySelectorAll('details[open]').forEach(function(d) {
         if (!d.contains(e.target)) {
             d.removeAttribute('open');
         }
     });
 });
 </script>
-""", unsafe_allow_html=True)
+""", height=0)
 
 st.title("\U0001f6d2 Edmonton Grocery Deals")
 st.caption("Edmonton \u2022 St. Albert \u2022 Leduc \u2022 updated hourly")
