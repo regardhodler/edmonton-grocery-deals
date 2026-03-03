@@ -1,6 +1,7 @@
 """Edmonton Grocery Deals Finder — Edmonton, St. Albert & Leduc."""
 
 import html as html_mod
+import json as json_mod
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -191,6 +192,206 @@ st.markdown("""
     opacity: 0.7;
     margin-left: 0.1rem;
 }
+
+/* Back to top button */
+.back-to-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(128,128,128,0.25);
+    color: #fff;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1000;
+    backdrop-filter: blur(8px);
+    border: none;
+    transition: background 0.2s;
+}
+.back-to-top:hover { background: rgba(128,128,128,0.45); }
+
+/* Bag add button on deal cards */
+.deal-card { position: relative; }
+.bag-add-btn {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.4rem;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(128,128,128,0.35);
+    background: rgba(30,30,30,0.85);
+    color: #ccc;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    z-index: 2;
+    padding: 0;
+}
+.bag-add-btn:hover {
+    border-color: #4CAF50;
+    color: #4CAF50;
+    background: rgba(76,175,80,0.1);
+}
+.bag-add-btn.added {
+    border-color: #4CAF50;
+    color: #4CAF50;
+    background: rgba(76,175,80,0.15);
+}
+
+/* Floating bag FAB */
+.bag-fab {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(76,175,80,0.9);
+    color: #fff;
+    font-size: 1.4rem;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1001;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    transition: background 0.2s, transform 0.15s;
+}
+.bag-fab:hover { background: rgba(76,175,80,1); transform: scale(1.05); }
+.bag-fab .bag-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #E53935;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+/* Bag panel */
+.bag-panel {
+    position: fixed;
+    bottom: 5.5rem;
+    left: 2rem;
+    width: 340px;
+    max-height: 60vh;
+    background: #1a1a2e;
+    border: 1px solid rgba(128,128,128,0.3);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    z-index: 1002;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+.bag-panel.open { display: flex; }
+.bag-panel-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(128,128,128,0.2);
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.bag-panel-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.25rem 0;
+}
+.bag-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid rgba(128,128,128,0.1);
+    font-size: 0.85rem;
+}
+.bag-item:last-child { border-bottom: none; }
+.bag-item img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+.bag-item-info { flex: 1; min-width: 0; }
+.bag-item-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.bag-item-detail {
+    font-size: 0.75rem;
+    color: #999;
+}
+.bag-item-remove {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+}
+.bag-item-remove:hover { color: #E53935; background: rgba(229,57,53,0.1); }
+.bag-panel-footer {
+    padding: 0.5rem 1rem;
+    border-top: 1px solid rgba(128,128,128,0.2);
+    display: flex;
+    justify-content: center;
+}
+.bag-clear-btn {
+    background: none;
+    border: 1px solid rgba(229,57,53,0.4);
+    color: #E53935;
+    font-size: 0.8rem;
+    padding: 0.3rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.bag-clear-btn:hover { background: rgba(229,57,53,0.1); }
+
+/* Bag panel empty state */
+.bag-empty {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: #888;
+    font-size: 0.85rem;
+}
+
+/* Mobile bag */
+@media (max-width: 768px) {
+    .bag-panel {
+        left: 0.5rem;
+        right: 0.5rem;
+        width: auto;
+        max-height: 50vh;
+    }
+    .bag-fab { left: 1rem; bottom: 1.5rem; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -220,6 +421,175 @@ doc.addEventListener('click', function(e) {
         }
     };
     trySticky();
+})();
+// ── Grocery Bag ──────────────────────────────────────────────────
+(function() {
+    const STORAGE_KEY = 'grocery_bag';
+    function getBag() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+        catch { return []; }
+    }
+    function saveBag(bag) { localStorage.setItem(STORAGE_KEY, JSON.stringify(bag)); }
+    function itemKey(item) { return item.name + '||' + item.merchant; }
+
+    // Create FAB
+    const fab = doc.createElement('button');
+    fab.className = 'bag-fab';
+    fab.title = 'Grocery Bag';
+    fab.innerHTML = '\uD83D\uDED2<span class="bag-badge">0</span>';
+    doc.body.appendChild(fab);
+
+    // Create Panel
+    const panel = doc.createElement('div');
+    panel.className = 'bag-panel';
+    panel.innerHTML =
+        '<div class="bag-panel-header"><span>\uD83D\uDED2 Grocery Bag</span><span class="bag-panel-count"></span></div>' +
+        '<div class="bag-panel-list"></div>' +
+        '<div class="bag-panel-footer"><button class="bag-clear-btn">Clear all</button></div>';
+    doc.body.appendChild(panel);
+
+    const badge = fab.querySelector('.bag-badge');
+    const listEl = panel.querySelector('.bag-panel-list');
+    const countEl = panel.querySelector('.bag-panel-count');
+    const clearBtn = panel.querySelector('.bag-clear-btn');
+
+    function updateBadge() {
+        const bag = getBag();
+        const n = bag.length;
+        badge.textContent = n;
+        fab.style.display = n > 0 ? 'flex' : 'none';
+        if (n === 0) panel.classList.remove('open');
+    }
+
+    function renderPanel() {
+        const bag = getBag();
+        countEl.textContent = bag.length + ' item' + (bag.length !== 1 ? 's' : '');
+        if (bag.length === 0) {
+            listEl.innerHTML = '<div class="bag-empty">Your bag is empty</div>';
+            clearBtn.style.display = 'none';
+            return;
+        }
+        clearBtn.style.display = '';
+        listEl.innerHTML = bag.map(function(item, i) {
+            const imgHtml = item.image_url
+                ? '<img src="' + item.image_url.replace(/"/g, '&quot;') + '" alt="">'
+                : '';
+            const name = item.name.replace(/</g, '&lt;');
+            const detail = (item.price ? item.price.replace(/</g, '&lt;') + ' \u2022 ' : '') + item.merchant.replace(/</g, '&lt;');
+            return '<div class="bag-item" data-idx="' + i + '">' +
+                imgHtml +
+                '<div class="bag-item-info"><div class="bag-item-name">' + name + '</div>' +
+                '<div class="bag-item-detail">' + detail + '</div></div>' +
+                '<button class="bag-item-remove" title="Remove">\u00D7</button></div>';
+        }).join('');
+    }
+
+    // FAB click toggles panel
+    fab.addEventListener('click', function() {
+        const isOpen = panel.classList.toggle('open');
+        if (isOpen) renderPanel();
+    });
+
+    // Clear all
+    clearBtn.addEventListener('click', function() {
+        saveBag([]);
+        updateBadge();
+        renderPanel();
+        // Reset all add buttons
+        doc.querySelectorAll('.bag-add-btn.added').forEach(function(b) {
+            b.classList.remove('added');
+            b.textContent = '+';
+        });
+    });
+
+    // Remove item from panel
+    panel.addEventListener('click', function(e) {
+        const removeBtn = e.target.closest('.bag-item-remove');
+        if (!removeBtn) return;
+        const bagItem = removeBtn.closest('.bag-item');
+        const idx = parseInt(bagItem.dataset.idx, 10);
+        const bag = getBag();
+        const removed = bag.splice(idx, 1)[0];
+        saveBag(bag);
+        updateBadge();
+        renderPanel();
+        // Reset matching card button
+        if (removed) {
+            doc.querySelectorAll('.deal-card[data-item]').forEach(function(card) {
+                try {
+                    const d = JSON.parse(card.getAttribute('data-item'));
+                    if (itemKey(d) === itemKey(removed)) {
+                        const btn = card.querySelector('.bag-add-btn');
+                        if (btn) { btn.classList.remove('added'); btn.textContent = '+'; }
+                    }
+                } catch {}
+            });
+        }
+    });
+
+    // Add to bag — delegated click on deal cards
+    doc.addEventListener('click', function(e) {
+        const btn = e.target.closest('.bag-add-btn');
+        if (!btn) return;
+        const card = btn.closest('.deal-card[data-item]');
+        if (!card) return;
+        e.stopPropagation();
+        try {
+            const item = JSON.parse(card.getAttribute('data-item'));
+            const bag = getBag();
+            const key = itemKey(item);
+            // Skip if already in bag
+            if (bag.some(function(b) { return itemKey(b) === key; })) return;
+            bag.push(item);
+            saveBag(bag);
+            updateBadge();
+            // Visual feedback
+            btn.classList.add('added');
+            btn.textContent = '\u2713';
+            setTimeout(function() {
+                btn.classList.remove('added');
+                btn.textContent = '+';
+            }, 1200);
+        } catch {}
+    });
+
+    // Sync add-button state on load (mark items already in bag)
+    function syncButtons() {
+        const bag = getBag();
+        if (!bag.length) return;
+        const keys = new Set(bag.map(itemKey));
+        doc.querySelectorAll('.deal-card[data-item]').forEach(function(card) {
+            try {
+                const d = JSON.parse(card.getAttribute('data-item'));
+                if (keys.has(itemKey(d))) {
+                    const btn = card.querySelector('.bag-add-btn');
+                    if (btn) { btn.classList.add('added'); btn.textContent = '\u2713'; }
+                }
+            } catch {}
+        });
+    }
+    // Run sync after a short delay to let Streamlit render cards
+    setTimeout(syncButtons, 500);
+    setTimeout(syncButtons, 1500);
+
+    updateBadge();
+})();
+// Back to top button
+(function() {
+    const btn = doc.createElement('button');
+    btn.className = 'back-to-top';
+    btn.innerHTML = '\u2191';
+    btn.title = 'Back to top';
+    btn.style.display = 'none';
+    doc.body.appendChild(btn);
+    btn.addEventListener('click', () => window.parent.scrollTo({top:0, behavior:'smooth'}));
+    const main = doc.querySelector('[data-testid="stAppViewContainer"]') || window.parent;
+    const scrollTarget = main.querySelector('.main') || main;
+    (scrollTarget === window.parent ? window.parent : scrollTarget)
+        .addEventListener('scroll', () => {
+            const y = scrollTarget.scrollTop || window.parent.scrollY || 0;
+            btn.style.display = y > 400 ? 'flex' : 'none';
+        });
 })();
 </script>
 """, height=0)
@@ -273,6 +643,7 @@ with sort_col:
     sort_option = st.pills("Sort by", sort_options, default="Name (A-Z)")
 
 # ── Store chip selector (shown when "Store" sort is active) ───────────────────
+store_sort_order = "Name (A-Z)"
 if sort_option == "Store":
     all_merchants = sorted(df["merchant"].unique())
     # Init session state for selected store chips
@@ -291,6 +662,14 @@ if sort_option == "Store":
         label_visibility="collapsed",
     )
     st.session_state.store_chips = set(store_chip_picks) if store_chip_picks else set()
+
+    # Sub-sort within stores
+    store_sort_order = st.pills(
+        "Sort within store",
+        ["Name (A-Z)", "Price: Low-High", "Price: High-Low", "Best Deals"],
+        default="Name (A-Z)",
+        label_visibility="collapsed",
+    )
 
     # Show deal counts per selected store
     if st.session_state.store_chips:
@@ -392,7 +771,22 @@ if sort_option == "Price: Low-High":
 elif sort_option == "Price: High-Low":
     filtered = filtered.sort_values("sort_price", ascending=False, na_position="last")
 elif sort_option == "Store":
-    filtered = filtered.sort_values("merchant", ascending=True)
+    if store_sort_order == "Price: Low-High":
+        filtered = filtered.sort_values(
+            ["merchant", "sort_price"], ascending=[True, True], na_position="last"
+        )
+    elif store_sort_order == "Price: High-Low":
+        filtered = filtered.sort_values(
+            ["merchant", "sort_price"], ascending=[True, False], na_position="last"
+        )
+    elif store_sort_order == "Best Deals":
+        filtered = filtered.sort_values(
+            ["merchant", "discount_pct"], ascending=[True, False], na_position="last"
+        )
+    else:
+        filtered = filtered.sort_values(
+            ["merchant", "name"], ascending=[True, True]
+        )
 elif sort_option == "Best Deals":
     filtered = filtered.sort_values("discount_pct", ascending=False, na_position="last")
 else:
@@ -474,7 +868,16 @@ with tab_list:
             is_watched = any(kw in row["name"].lower() for kw in watched_kws)
             card_class = "deal-card watched" if is_watched else "deal-card"
 
-            cards_html += f'<div class="{card_class}">'
+            # Bag data attribute
+            item_data = json_mod.dumps({
+                "name": row["name"],
+                "merchant": row["merchant"],
+                "price": row["price"] or "",
+                "image_url": row["image_url"] or "",
+            })
+            item_data_escaped = html_mod.escape(item_data)
+
+            cards_html += f'<div class="{card_class}" data-item="{item_data_escaped}">'
 
             # Image
             if img_url:
@@ -517,6 +920,7 @@ with tab_list:
                 )
 
             cards_html += "</div>"  # deal-info
+            cards_html += '<button class="bag-add-btn" title="Add to bag">+</button>'
             cards_html += "</div>"  # deal-card
 
         cards_html += "</div>"
