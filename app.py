@@ -79,11 +79,6 @@ with st.sidebar:
         default=available_categories,
     )
 
-    sort_option = st.selectbox(
-        "Sort by",
-        ["Name (A-Z)", "Price (low to high)", "Price (high to low)", "Store"],
-    )
-
     st.divider()
     st.caption("Edmonton, St. Albert & Leduc")
     if not df.empty:
@@ -92,12 +87,17 @@ with st.sidebar:
         if valid_from and valid_to:
             st.caption(f"Flyers valid: {valid_from[:10]} to {valid_to[:10]}")
 
-# Search bar stays in main area (easy to tap on phone)
-search_query = st.text_input(
-    "\U0001f50d Search items",
-    placeholder="e.g. chicken, bread, eggs",
-    label_visibility="collapsed",
-)
+# Search bar + sort pills in main area (easy to tap on phone)
+search_col, sort_col = st.columns([3, 1])
+with search_col:
+    search_query = st.text_input(
+        "\U0001f50d Search items",
+        placeholder="e.g. chicken, bread, eggs",
+        label_visibility="collapsed",
+    )
+with sort_col:
+    sort_options = ["Name (A-Z)", "Price: Low-High", "Price: High-Low", "Store"]
+    sort_option = st.pills("Sort by", sort_options, default="Name (A-Z)")
 
 # ── Apply filters ───────────────────────────────────────────────────────────
 filtered = df[
@@ -111,14 +111,14 @@ if search_query:
     ]
 
 # ── Sort ────────────────────────────────────────────────────────────────────
-if sort_option == "Price (low to high)":
+if sort_option == "Price: Low-High":
     filtered = filtered.sort_values("sort_price", ascending=True, na_position="last")
-elif sort_option == "Price (high to low)":
+elif sort_option == "Price: High-Low":
     filtered = filtered.sort_values("sort_price", ascending=False, na_position="last")
-elif sort_option == "Name (A-Z)":
-    filtered = filtered.sort_values("name", ascending=True)
-else:
+elif sort_option == "Store":
     filtered = filtered.sort_values("merchant", ascending=True)
+else:
+    filtered = filtered.sort_values("name", ascending=True)
 
 st.markdown(f"**{len(filtered)}** deals found")
 
