@@ -1,5 +1,7 @@
 """Keyword-based item categorizer for grocery deals."""
 
+import re
+
 CATEGORY_KEYWORDS = {
     "Produce": [
         "apple", "banana", "orange", "grape", "strawberr", "blueberr", "raspberr",
@@ -59,6 +61,11 @@ def categorize_item(name: str) -> str:
     lower = name.lower()
     for category, keywords in CATEGORY_KEYWORDS.items():
         for kw in keywords:
-            if kw in lower:
-                return category
+            # Use word boundary for single words, exact substring for multi-word phrases
+            if " " in kw:
+                if kw in lower:
+                    return category
+            else:
+                if re.search(r'\b' + re.escape(kw) + r'\b', lower):
+                    return category
     return "Other"

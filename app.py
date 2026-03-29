@@ -2,6 +2,7 @@
 
 import html as html_mod
 import json as json_mod
+import urllib.parse
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -387,6 +388,18 @@ st.markdown("""
     }
     .bag-fab { left: 1rem; bottom: 1.5rem; }
 }
+
+/* Share button */
+.share-btn {
+    font-size: 0.75rem;
+    opacity: 0.4;
+    text-decoration: none;
+    padding: 2px 4px;
+    border-radius: 4px;
+    align-self: flex-start;
+    margin-top: 4px;
+}
+.share-btn:hover { opacity: 1; background: rgba(255,255,255,0.1); }
 </style>
 """, unsafe_allow_html=True)
 
@@ -663,17 +676,36 @@ if "watched_keywords" not in st.session_state:
         if watch_param else []
     )
 
+# ── Pre-fill search from URL ?q= param ───────────────────────────────────────
+_url_q = st.query_params.get("q", "")
+
+# ── Recent searches ───────────────────────────────────────────────────────────
+if "recent_searches" not in st.session_state:
+    st.session_state.recent_searches = []
+
 # ── Search bar + sort pills ──────────────────────────────────────────────────
 search_col, sort_col = st.columns([3, 1])
 with search_col:
     search_query = st.text_input(
         "\U0001f50d Search items",
+        value=_url_q,
         placeholder="e.g. chicken, bread, eggs",
         label_visibility="collapsed",
     )
 with sort_col:
     sort_options = ["Name (A-Z)", "Price: Low-High", "Price: High-Low", "Store", "Best Deals"]
     sort_option = st.pills("Sort by", sort_options, default="Name (A-Z)")
+
+# Track recent searches
+if search_query and search_query not in st.session_state.recent_searches:
+    st.session_state.recent_searches.insert(0, search_query)
+    st.session_state.recent_searches = st.session_state.recent_searches[:8]
+
+# Show recent searches as quick-pick chips
+if not search_query and st.session_state.recent_searches:
+    picked = st.pills("Recent", st.session_state.recent_searches, key="recent_pick", label_visibility="collapsed")
+    if picked:
+        search_query = picked
 
 # ── Store chip selector (shown when "Store" sort is active) ───────────────────
 store_sort_order = "Name (A-Z)"
@@ -763,6 +795,29 @@ with filter_col:
                 st.rerun()
 
         st.divider()
+        st.markdown("**🎯 Price Targets**")
+        st.caption("Get alerted when a watched item drops below your target price")
+
+        if "price_targets" not in st.session_state:
+            st.session_state.price_targets = {}  # {keyword: float}
+
+        pt_item = st.text_input("Item keyword", placeholder="e.g. chicken", key="pt_item")
+        pt_price = st.number_input("Alert me when price is below ($)", min_value=0.01, max_value=500.0, value=5.0, step=0.50, key="pt_price")
+        if st.button("Add Price Target", key="add_pt"):
+            if pt_item.strip():
+                st.session_state.price_targets[pt_item.strip().lower()] = pt_price
+                st.success(f"Watching {pt_item} < ${pt_price:.2f}")
+
+        if st.session_state.price_targets:
+            st.caption("Active targets:")
+            for kw, target in list(st.session_state.price_targets.items()):
+                col_a, col_b = st.columns([3, 1])
+                col_a.caption(f"{kw} < ${target:.2f}")
+                if col_b.button("✕", key=f"rm_pt_{kw}"):
+                    del st.session_state.price_targets[kw]
+                    st.rerun()
+
+        st.divider()
         st.caption("Edmonton, St. Albert & Leduc")
         if not df.empty:
             valid_from = df["valid_from"].dropna().min()
@@ -772,8 +827,10 @@ with filter_col:
 
 with settings_col:
     with st.popover("Settings", use_container_width=True):
-        tg_token = st.text_input("Telegram Bot Token", type="password")
-        tg_chat = st.text_input("Telegram Chat ID")
+        _default_token = st.secrets.get("telegram_token", "") if hasattr(st, "secrets") else ""
+        _default_chat = st.secrets.get("telegram_chat_id", "") if hasattr(st, "secrets") else ""
+        tg_token = st.text_input("Telegram Bot Token", value=_default_token, type="password")
+        tg_chat = st.text_input("Telegram Chat ID", value=_default_chat)
         if st.button("Send Test Alert") and tg_token and tg_chat:
             test_items = [{"name": "Test Item", "merchant": "Test Store", "price": "$1.99", "sale_story": "Test alert from Edmonton Grocery Deals"}]
             ok = send_telegram_alert(tg_token, tg_chat, test_items)
@@ -844,8 +901,28 @@ if (
         send_telegram_alert(tg_token, tg_chat, items)
         st.session_state.tg_alert_sent = True
 
+# ── Price target alerts ───────────────────────────────────────────────────────
+if tg_token and tg_chat and st.session_state.get("price_targets") and "pt_alert_sent" not in st.session_state:
+    pt_hits = []
+    for kw, target_price in st.session_state.price_targets.items():
+        matches = filtered[
+            filtered["name"].str.lower().str.contains(kw, na=False) &
+            filtered["sort_price"].notna() &
+            (filtered["sort_price"] < target_price)
+        ]
+        for _, row in matches.iterrows():
+            pt_hits.append({
+                "name": row["name"],
+                "merchant": row["merchant"],
+                "price": row["price"],
+                "sale_story": f"🎯 Price target hit! {row['name']} at {row['price']} (target: < ${target_price:.2f})",
+            })
+    if pt_hits:
+        send_telegram_alert(tg_token, tg_chat, pt_hits)
+        st.session_state.pt_alert_sent = True
+
 # ── Tabs ──────────────────────────────────────────────────────────────────────
-tab_list, tab_map = st.tabs(["\U0001f4cb Deals", "\U0001f5fa\ufe0f Map"])
+tab_list, tab_digest, tab_map = st.tabs(["\U0001f4cb Deals", "\U0001f525 Best Deals", "\U0001f5fa\ufe0f Map"])
 
 # ── List View ─────────────────────────────────────────────────────────────────
 with tab_list:
@@ -935,6 +1012,10 @@ with tab_list:
 
             if discount > 0:
                 cards_html += f' <span class="savings-badge">Save {int(discount)}%</span>'
+                # Deal score: stars based on discount + price trend
+                score = min(5, max(1, round(discount / 20)))  # 1-5 stars, 20% = 1 star, 100% = 5 stars
+                stars = "⭐" * score
+                cards_html += f' <span style="font-size:0.7rem" title="Deal score: {score}/5">{stars}</span>'
 
             cards_html += "</div>"  # deal-meta
 
@@ -953,6 +1034,8 @@ with tab_list:
                 )
 
             cards_html += "</div>"  # deal-info
+            share_url = f"?q={urllib.parse.quote(row['name'])}"
+            cards_html += f'<a href="{share_url}" class="share-btn" title="Share this deal">🔗</a>'
             cards_html += (
                 '<div class="bag-controls">'
                 '<button class="bag-ctrl-btn bag-minus" title="Remove one">\u2212</button>'
@@ -971,6 +1054,89 @@ with tab_list:
             if st.button(f"Show more ({remaining} remaining)"):
                 st.session_state.show_count += PAGE_SIZE
                 st.rerun()
+
+        # Export bag to CSV
+        st.divider()
+        if st.button("⬇️ Export current deals to CSV", key="export_csv"):
+            csv = filtered.head(st.session_state.show_count)[["name","merchant","price","pre_price","sale_story","category","valid_from","valid_to"]].copy()
+            csv.columns = ["Item","Store","Price","Was","Deal","Category","Valid From","Valid To"]
+            st.download_button(
+                "Download CSV",
+                data=csv.to_csv(index=False).encode("utf-8"),
+                file_name="edmonton_grocery_deals.csv",
+                mime="text/csv",
+                key="dl_csv",
+            )
+
+# ── Best Deals Digest ─────────────────────────────────────────────────────────
+with tab_digest:
+    st.markdown("### 🔥 Top Deals This Week")
+    st.caption("Best discounts across all stores, ranked by % savings")
+
+    top_disc = df[df["discount_pct"] > 0].sort_values("discount_pct", ascending=False).head(20)
+
+    if top_disc.empty:
+        st.info("No discount data available right now.")
+    else:
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Deals with savings", f"{len(df[df['discount_pct'] > 0])}")
+        c2.metric("Best discount", f"{int(df['discount_pct'].max())}% off")
+        c3.metric("Avg discount", f"{df[df['discount_pct'] > 0]['discount_pct'].mean():.0f}% off")
+
+        st.divider()
+
+        digest_html = '<div class="deals-container">'
+        for rank, (_, row) in enumerate(top_disc.iterrows(), 1):
+            name = html_mod.escape(row["name"])
+            merchant = html_mod.escape(row["merchant"])
+            color = MERCHANT_COLORS.get(row["merchant"], "#888")
+            price = html_mod.escape(row["price"] or "")
+            pre_price = html_mod.escape(row["pre_price"] or "")
+            discount = int(row["discount_pct"])
+            img_url = row["image_url"] or ""
+
+            medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(rank, f"#{rank}")
+
+            digest_html += f'<div class="deal-card">'
+            if img_url:
+                digest_html += f'<img src="{html_mod.escape(img_url)}" alt="" loading="lazy">'
+            digest_html += '<div class="deal-info">'
+            digest_html += f'<p class="deal-name">{medal} {name}</p>'
+            digest_html += '<div class="deal-meta">'
+            digest_html += f'<span class="store-dot" style="background:{color}"></span>'
+            digest_html += f'<span class="store-name-label">{merchant}</span>'
+            if pre_price and price:
+                digest_html += f' <span class="deal-orig-price">{pre_price}</span>'
+                digest_html += f' <span class="deal-price">{price}</span>'
+            elif price:
+                digest_html += f' <span class="deal-price">{price}</span>'
+            digest_html += f' <span class="savings-badge">Save {discount}%</span>'
+            digest_html += '</div></div></div>'
+
+        digest_html += '</div>'
+        st.markdown(digest_html, unsafe_allow_html=True)
+
+        st.divider()
+        st.markdown("### 🏆 Best Deal Per Store")
+        best_per_store = (
+            df[df["discount_pct"] > 0]
+            .sort_values("discount_pct", ascending=False)
+            .drop_duplicates(subset=["merchant"], keep="first")
+        )
+        if not best_per_store.empty:
+            cols = st.columns(min(len(best_per_store), 3))
+            for i, (_, row) in enumerate(best_per_store.iterrows()):
+                color = MERCHANT_COLORS.get(row["merchant"], "#888")
+                with cols[i % len(cols)]:
+                    st.markdown(
+                        f'<div style="background:#1a1a2e;border-radius:10px;padding:12px;margin:4px 0;border-left:4px solid {color}">'
+                        f'<div style="font-size:0.75rem;color:#aaa">{html_mod.escape(row["merchant"])}</div>'
+                        f'<div style="font-weight:bold;color:#fff;font-size:0.9rem">{html_mod.escape(row["name"])}</div>'
+                        f'<div style="color:#4ade80;font-weight:bold">Save {int(row["discount_pct"])}%</div>'
+                        f'<div style="color:#ccc">{html_mod.escape(row["price"] or "")}</div>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
 
 # ── Map View ──────────────────────────────────────────────────────────────────
 with tab_map:
