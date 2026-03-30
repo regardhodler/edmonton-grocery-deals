@@ -1071,17 +1071,29 @@ with tab_list:
 # ── Best Deals Digest ─────────────────────────────────────────────────────────
 with tab_digest:
     st.markdown("### 🔥 Top Deals This Week")
-    st.caption("Best discounts across all stores, ranked by % savings")
 
-    top_disc = df[df["discount_pct"] > 0].sort_values("discount_pct", ascending=False).head(20)
+    _digest_sort = st.pills(
+        "Sort by",
+        ["Best Deals (% off)", "Price: Low to High"],
+        default="Best Deals (% off)",
+        key="digest_sort",
+    )
+
+    _disc_pool = df[df["discount_pct"] > 0]
+    if _digest_sort == "Price: Low to High":
+        top_disc = _disc_pool.dropna(subset=["sort_price"]).sort_values("sort_price", ascending=True).head(20)
+        st.caption("Deals with a discount, sorted cheapest first")
+    else:
+        top_disc = _disc_pool.sort_values("discount_pct", ascending=False).head(20)
+        st.caption("Best discounts across all stores, ranked by % savings")
 
     if top_disc.empty:
         st.info("No discount data available right now.")
     else:
         c1, c2, c3 = st.columns(3)
-        c1.metric("Deals with savings", f"{len(df[df['discount_pct'] > 0])}")
+        c1.metric("Deals with savings", f"{len(_disc_pool)}")
         c2.metric("Best discount", f"{int(df['discount_pct'].max())}% off")
-        c3.metric("Avg discount", f"{df[df['discount_pct'] > 0]['discount_pct'].mean():.0f}% off")
+        c3.metric("Avg discount", f"{_disc_pool['discount_pct'].mean():.0f}% off")
 
         st.divider()
 
